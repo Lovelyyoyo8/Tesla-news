@@ -31,25 +31,38 @@ def get_tesla_news():
         print(f"Error in get_tesla_news: {e}")
         return []
 
-def save_to_csv(news_links):
+def parse_news_article(url):
+    try:
+        driver.get(url)
+        title = driver.find_element(By.CSS_SELECTOR, 'div.fullview-title').text
+        content = driver.find_element(By.CSS_SELECTOR, 'div.fullview-news-outer').text
+
+        return {'title': title, 'content': content}
+    except Exception as e:
+        print(f"Error in parse_news_article: {e}")
+        return {}
+
+def save_to_csv(news_data):
     try:
         with open('tesla_news.csv', mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
-            writer.writerow(['Title', 'Link'])
-            for link in news_links:
-                writer.writerow([link.text, link.get_attribute('href')])
+            writer.writerow(['Title', 'Content'])
+            for article in news_data:
+                writer.writerow([article['title'], article['content']])
     except Exception as e:
         print(f"Error in save_to_csv: {e}")
 
 try:
     while True:
-        tesla_news = get_tesla_news()
+        tesla_news_links = get_tesla_news()
+        news_data = []
 
         print("Tesla News Links:")
-        for link in tesla_news:
+        for link in tesla_news_links:
             print(link)
+            news_data.append(parse_news_article(link))
 
-        save_to_csv(tesla_news)
+        save_to_csv(news_data)
         print("Saved to tesla_news.csv")
 
         time.sleep(1800)
