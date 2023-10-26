@@ -2,8 +2,9 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
+import unittest
 
-chrome_driver_path = 'C:\\Users\\Yao\\.cache\\selenium\\chromedriver\\win64\\117.0.5938.62'
+chrome_driver_path = 'C:\Users\Yao\.cache\selenium\chromedriver\win64\117.0.5938.62'
 
 try:
     driver = webdriver.Chrome(chrome_driver_path)
@@ -52,24 +53,43 @@ def save_to_csv(news_data):
     except Exception as e:
         print(f"Error in save_to_csv: {e}")
 
-try:
-    while True:
-        tesla_news_links = get_tesla_news()
-        news_data = []
 
-        print("Tesla News Links:")
-        for link in tesla_news_links:
-            print(link)
-            news_data.append(parse_news_article(link))
+class TestTeslaNewsScraper(unittest.TestCase):
+    def test_get_tesla_news(self):
+        news_links = get_tesla_news()
+        self.assertIsInstance(news_links, list)
+        self.assertTrue(all(isinstance(link, str) for link in news_links))
 
-        save_to_csv(news_data)
-        print("Saved to tesla_news.csv")
+    def test_parse_news_article(self):
+        url = 'https://example.com/news_article'
+        news_data = parse_news_article(url)
+        self.assertIsInstance(news_data, dict)
+        self.assertIn('title', news_data)
+        self.assertIn('content', news_data)
+        self.assertIsInstance(news_data['title'], str)
+        self.assertIsInstance(news_data['content'], str)
 
-        time.sleep(1800)
+    def test_save_to_csv(self):
+        test_data = [{'title': 'Test Title 1', 'content': 'Test Content 1'},
+                     {'title': 'Test Title 2', 'content': 'Test Content 2'}]
 
-except KeyboardInterrupt:
-    print("Program terminated by user.")
-except Exception as e:
-    print(f"An unexpected error occurred: {e}")
-finally:
-    driver.quit()
+        save_to_csv(test_data)
+
+        import os
+        self.assertTrue(os.path.isfile('tesla_news.csv'))
+
+        with open('tesla_news.csv', mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            header = next(reader)
+            self.assertEqual(header, ['Title', 'Content'])
+
+            row1 = next(reader)
+            self.assertEqual(row1, ['Test Title 1', 'Test Content 1'])
+
+            row2 = next(reader)
+            self.assertEqual(row2, ['Test Title 2', 'Test Content 2'])
+
+if __name__ == '__main__':
+    unittest.main()
+
+driver.quit()
